@@ -9,7 +9,7 @@ class tool:
 
 class pop:
     
-    def __init__(self,name,size,toollist = []):
+    def __init__(self,name,size,toollist):
         self.name = name    #Each population has a name (which will be saved
                             #under "pop" for tools created in it)
         self.size = size    #a size (number of individuals)
@@ -66,8 +66,8 @@ class pop:
 
         self.toollist += trans_tools
     
-def simulation(size1 = 200,size2 = 200,p_mig = 0.000001,t_max = 100000, burnin = 50000,
-              trans_frac = 0.5,  p_lucky = 0.001, p_loss = 0.2, beta = 0.1):
+def simulation(size1 = 200,size2 = 200,p_mig = 0.000001,t_max = 200000, burnin = 100000,
+              trans_frac = 1,  p_lucky = 0.001, p_loss = 0.1, beta = 0.1, plot = False):
     #simulate the accumulation of tools in two interconnected populations
     #size1 - the size of the focal population
     #size2 - the size of the neighboring population
@@ -91,9 +91,9 @@ def simulation(size1 = 200,size2 = 200,p_mig = 0.000001,t_max = 100000, burnin =
     n_tools2 = [] #a list of the number of tools in each time step in the neighboring population
 
     for t in range(t_max): #progress in time
-        if (t+1)%25000 == 0:    #print the current time step every 10000 time steps to monitor
+        #if (t+1)%2500 == 0:    #print the current time step every 5000 time steps to monitor
                             #the simulation's progress
-            print (t+1)
+            #print (t+1, np.mean(n_tools1[t-2500:]))
             
         pop1.tick(p_lucky, p_loss, beta) #progess the focal population in time
         pop2.tick(p_lucky, p_loss, beta) #progess the neighboring population in time
@@ -115,10 +115,44 @@ def simulation(size1 = 200,size2 = 200,p_mig = 0.000001,t_max = 100000, burnin =
                     unique -= 1
             n_tools1_unique += [unique]
 
-    plt.plot(n_tools1)  #plot the accumulation of tools in the focal population
-    plt.plot(n_tools2)  #plot the accumulation of tools in the neighboring population
-    plt.show()
+    if plot == True:
+        plt.plot(n_tools1, label = "Focal Population")  #plot the accumulation of tools in the focal population
+        plt.plot(n_tools2, label = "Neighbor")  #plot the accumulation of tools in the neighboring population
+        plt.legend()
+        plt.xlabel("Time step")
+        plt.ylabel("Repertoire size")
+        plt.show()
 
     return [np.mean(n_tools1[burnin:]),np.mean(n_tools1_unique)]
     #return the mean repertoire size in the focal population and
     #the mean number of tools unique to it
+
+def results_tables(
+    sizes2 = [2000,1800,1600,1400,1200,1000,800,600,400,200],
+    p_migs = [0.000001,0.000002,0.000003,0.000004,0.000005,0.000006,0.000007,0.000008,0.000009,0.00001],
+    size1 = 200,t_max = 200000, burnin = 100000, trans_frac = 1,  p_lucky = 0.001, p_loss = 0.1,
+    beta = 0.1):
+
+    tools = []
+    effective_n = []
+    for size2 in sizes2:
+        tools_row = []
+        effective_n_row = []
+        for p_mig in p_migs:
+            print(size2p_mig)
+            result = simulation(size1,size2,p_mig,t_max, burnin,trans_frac,  p_lucky, p_loss,beta)[0]
+            tools_row += [result]
+            effective_n_row += [np.sqrt((result*p_loss)/(p_lucky*beta))]
+            
+        tools += [tools_row]
+        effective_n += [effective_n_row]
+
+    return [tools, effective_n]
+
+        
+
+
+
+
+
+
